@@ -18,6 +18,7 @@ public class LoginController : MonoBehaviour
     [Header("Events: ")]
     [SerializeField] UnityEvent onLoginSuccessEvent;
     [SerializeField] UnityEvent onBlockLogin;
+    [SerializeField] UnityEvent onTryLater;
 
 
     private void Start()
@@ -28,10 +29,17 @@ public class LoginController : MonoBehaviour
         }
         else
         {
-            emailInput.text = "ss@gmail.com";
-            passwordInput.text = "Test123@";
+            //emailInput.text = "ss@gmail.com";
+            //passwordInput.text = "Test123@";
         }
     }
+
+    private void OnDisable()
+    {
+        emailInput.text = string.Empty;
+        passwordInput.text = string.Empty;
+    }
+
     public void OnClickLogin()
     {
         if (!IsEmail(emailInput.text))
@@ -59,6 +67,10 @@ public class LoginController : MonoBehaviour
             if (STPRestClient.ErrorResponse.Contains("TOO_MANY_WRONG_LOGIN"))
             {
                 onBlockLogin?.Invoke();
+            }
+            if (!STPRestClient.ErrorResponse.Contains("USER_NOT_FOUND") && !STPRestClient.ErrorResponse.Contains("PASSWORD_IS_WRONG") && !STPRestClient.ErrorResponse.Contains("TOO_MANY_WRONG_LOGIN"))
+            {
+                onTryLater?.Invoke();
             }
         });
     }

@@ -11,20 +11,44 @@ public class InventoryField : MonoBehaviour
     [SerializeField] RectTransform content;
     [SerializeField] GameObject btnLogout;
 
+    ListItemDto listItemDto;
+
     private void OnEnable()
+    {
+        Registry.itemService.GetItemBuff((listItemResponse) =>
+        {
+            //ShowListItem(listItemResponse);
+            this.listItemDto = listItemResponse;
+        }, () =>
+        {
+            Debug.LogError("Get Item Buff Failed");
+        });
+    }
+
+    private void OnDisable()
+    {
+        this.listItemDto = null;
+        StopAllCoroutines();
+        foreach (Transform child in content)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+
+    public void OnShowBuffStatus()
     {
         if (!btnLogout.activeInHierarchy)
         {
             btnLogout.SetActive(true);
         }
         if (content.transform.childCount > 0) return; //avoid manual enable/disable on editor
-        Registry.itemService.GetItemBuff((listItemResponse) =>
-        {
-            ShowListItem(listItemResponse);
-        }, () =>
-        {
-            Debug.LogError("Get Item Buff Failed");
-        });
+        StartCoroutine(IEDelayShowBuffs());
+    }
+
+    private IEnumerator IEDelayShowBuffs()
+    {
+        yield return new WaitUntil(() => this.listItemDto != null);
+        ShowListItem(listItemDto);
     }
 
     private void ShowListItem(ListItemDto listItemDto)
@@ -45,7 +69,7 @@ public class InventoryField : MonoBehaviour
             DateTime startUsedTime = itemDto.useTime;
             DateTime expiredDate = itemDto.expiredDate;
             string description = GameData.Instance.GetDescription(itemDto.ItemId);
-            newItem.UpdateItem(thumbnail, startUsedTime, expiredDate, itemName, description);
+            newItem.UpdateItem(thumbnail, startUsedTime, expiredDate, itemName, description, itemDto.duration);
         }
     }
 
